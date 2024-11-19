@@ -1,0 +1,34 @@
+Location,Order Id,Order #,Checks,Opened,# of Guests,Tab Names,Server,Table,Revenue Center,Dining Area,Service,Dining Options,Discount Amount,Amount,Tax,Tip,Gratuity,Total,Voided,Paid,Closed,Duration (Opened to Paid),Order Source
+1234 Elmwood Avenue,900000004019159011,1,"1, 4",4/10/24 4:26 PM,1,Chris Davis,Bartender A,,Dining Room,,Dinner,,11.0,32.88,2.06,0.0,0.0,34.94,False,4/10/24 5:04 PM,4/10/24 5:04 PM,00:37:52,In Store
+1234 Elmwood Avenue,900000004019190489,2,2,4/10/24 4:28 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,1.88,0.12,0.0,0.0,2.0,False,4/10/24 4:28 PM,4/10/24 4:28 PM,00:00:06,In Store
+1234 Elmwood Avenue,900000004019557063,3,3,4/10/24 4:42 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,1.88,0.12,0.0,0.0,2.0,False,4/10/24 4:42 PM,4/10/24 4:42 PM,00:00:04,In Store
+1234 Elmwood Avenue,900000004021390076,6,6,4/10/24 5:43 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,3.29,0.21,0.0,0.0,3.5,False,4/10/24 5:43 PM,4/10/24 5:43 PM,00:00:10,In Store
+1234 Elmwood Avenue,900000004021631623,7,7,4/10/24 5:50 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,33.45,2.11,0.0,0.0,35.56,False,4/10/24 6:39 PM,4/10/24 6:39 PM,00:49:10,In Store
+1234 Elmwood Avenue,900000004021964267,8,8,4/10/24 6:00 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,28.65,1.8,0.0,0.0,30.45,False,4/10/24 7:03 PM,4/10/24 7:03 PM,01:03:44,In Store
+1234 Elmwood Avenue,900000004022191858,9,9,4/10/24 6:07 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,3.76,0.24,0.0,0.0,4.0,False,4/10/24 6:07 PM,4/10/24 6:07 PM,00:00:07,In Store
+1234 Elmwood Avenue,900000004022520275,11,11,4/10/24 6:14 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,30.37,1.91,0.0,0.0,32.28,False,4/10/24 7:15 PM,4/10/24 7:15 PM,01:00:32,In Store
+1234 Elmwood Avenue,900000004023552887,12,12,4/10/24 6:16 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,29.44,1.85,5.89,0.0,37.18,False,4/10/24 7:26 PM,4/10/24 7:26 PM,01:10:04,In Store
+1234 Elmwood Avenue,900000004023591933,13,13,4/10/24 6:48 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,31.05,1.95,0.0,0.0,33.0,False,4/10/24 7:49 PM,4/10/24 7:49 PM,01:00:47,In Store
+1234 Elmwood Avenue,900000004024146131,14,14,4/10/24 7:05 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,5.64,0.36,0.0,0.0,6.0,False,4/10/24 7:05 PM,4/10/24 7:05 PM,00:00:14,In Store
+1234 Elmwood Avenue,900000004024227002,15,15,4/10/24 7:07 PM,1,Chris Davis,Bartender A,,Dining Room,,Dinner,,0.0,22.5,1.41,0.0,0.0,23.91,False,4/10/24 7:36 PM,4/10/24 7:36 PM,00:29:02,In Store
+1234 Elmwood Avenue,900000004024413500,16,16,4/10/24 7:14 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,1.88,0.12,0.0,0.0,2.0,False,4/10/24 7:14 PM,4/10/24 7:14 PM,00:00:11,In Store
+1234 Elmwood Avenue,900000004024702795,17,17,4/10/24 7:22 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,29.42,1.85,0.0,0.0,31.27,False,4/10/24 7:53 PM,4/10/24 7:53 PM,00:30:28,In Store
+1234 Elmwood Avenue,900000004024825701,18,"18, 22, 23, 24",4/10/24 7:26 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,28.0,1.76,2.6,0.0,32.36,False,4/10/24 8:07 PM,4/10/24 8:07 PM,00:40:27,In Store
+1234 Elmwood Avenue,900000004024930393,19,19,4/10/24 7:31 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,3.29,0.21,0.0,0.0,3.5,False,4/10/24 7:31 PM,4/10/24 7:31 PM,00:00:07,In Store
+1234 Elmwood Avenue,900000004024951122,20,20,4/10/24 7:32 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,1.88,0.12,0.0,0.0,2.0,False,4/10/24 7:32 PM,4/10/24 7:32 PM,00:00:05,In Store
+1234 Elmwood Avenue,900000004025159790,21,21,4/10/24 7:39 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,1.88,0.12,0.0,0.0,2.0,False,4/10/24 7:39 PM,4/10/24 7:39 PM,00:00:06,In Store
+1234 Elmwood Avenue,900000004025705455,25,25,4/10/24 7:58 PM,1,Jordan Davis,Bartender A,,Dining Room,,Dinner,,0.0,11.0,0.69,0.0,0.0,11.69,False,4/10/24 8:15 PM,4/10/24 8:15 PM,00:16:53,In Store
+1234 Elmwood Avenue,900000004025769317,26,26,4/10/24 8:01 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,1.88,0.12,0.0,0.0,2.0,False,4/10/24 8:01 PM,4/10/24 8:01 PM,00:00:17,In Store
+1234 Elmwood Avenue,900000004025778558,27,27,4/10/24 8:01 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,3.29,0.21,0.0,0.0,3.5,False,4/10/24 8:02 PM,4/10/24 8:02 PM,00:00:08,In Store
+1234 Elmwood Avenue,900000004025794496,28,28,4/10/24 8:02 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,6.5,0.41,0.0,0.0,6.91,False,4/10/24 8:21 PM,4/10/24 8:21 PM,00:18:46,In Store
+1234 Elmwood Avenue,900000004025930951,29,29,4/10/24 8:07 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,1.88,0.12,0.0,0.0,2.0,False,4/10/24 8:08 PM,4/10/24 8:08 PM,00:00:11,In Store
+1234 Elmwood Avenue,900000004026110087,30,30,4/10/24 8:15 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,0.0,0.0,0.0,0.0,0.0,True,4/10/24 8:15 PM,4/10/24 8:15 PM,00:00:10,In Store
+1234 Elmwood Avenue,900000004026136102,31,31,4/10/24 8:16 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,5.5,0.34,0.0,0.0,5.84,False,4/10/24 8:30 PM,4/10/24 8:30 PM,00:14:02,In Store
+1234 Elmwood Avenue,900000004026143277,32,32,4/10/24 8:16 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,3.29,0.21,0.0,0.0,3.5,False,4/10/24 8:16 PM,4/10/24 8:16 PM,00:00:13,In Store
+1234 Elmwood Avenue,900000004026443995,33,33,4/10/24 8:29 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,0.0,0.0,0.0,0.0,0.0,False,4/10/24 10:05 PM,4/10/24 10:05 PM,01:35:43,In Store
+1234 Elmwood Avenue,900000004026572083,34,34,4/10/24 8:35 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,1.88,0.12,0.0,0.0,2.0,False,4/10/24 8:35 PM,4/10/24 8:35 PM,00:00:20,In Store
+1234 Elmwood Avenue,900000004026948948,35,35,4/10/24 8:53 PM,1,,Bartender A,,Dining Room,,Dinner,,0.0,2.59,0.16,0.0,0.0,2.75,False,4/10/24 8:53 PM,4/10/24 8:53 PM,00:00:08,In Store
+1234 Elmwood Avenue,900000004027430789,36,36,4/10/24 9:20 PM,1,,Bartender A,,Dining Room,,Late Night,,0.0,3.29,0.21,0.0,0.0,3.5,False,4/10/24 9:21 PM,4/10/24 9:21 PM,00:00:21,In Store
+1234 Elmwood Avenue,900000004027461147,37,37,4/10/24 9:22 PM,1,,Bartender A,,Dining Room,,Late Night,,0.0,9.88,0.62,0.0,0.0,10.5,False,4/10/24 9:23 PM,4/10/24 9:23 PM,00:00:25,In Store
+1234 Elmwood Avenue,900000004027801587,38,38,4/10/24 9:42 PM,1,,Bartender A,,Dining Room,,Late Night,,0.0,13.17,0.83,2.9,0.0,16.9,False,4/10/24 9:48 PM,4/10/24 9:48 PM,00:05:20,In Store
+1234 Elmwood Avenue,900000004027882838,39,39,4/10/24 9:47 PM,1,,Bartender A,,Dining Room,,Late Night,,0.0,3.53,0.22,0.0,0.0,3.75,False,4/10/24 9:52 PM,4/10/24 9:52 PM,00:05:45,In Store

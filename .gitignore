@@ -1,0 +1,4 @@
+# Ignore .env files to prevent exposing sensitive data
+.env
+prePublish.md
+notes.txt
