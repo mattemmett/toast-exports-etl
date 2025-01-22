@@ -51,9 +51,7 @@ def create_tables_time_entries(conn):
                 job_id BIGINT UNIQUE NOT NULL,          -- Job Id from the input data
                 job_guid UUID UNIQUE NOT NULL,          -- Job GUID
                 job_code VARCHAR(50),                   -- Job code
-                job_title VARCHAR(255) NOT NULL,        -- Job title
-                location_id INT NOT NULL,               -- Foreign key to locations table
-                CONSTRAINT fk_location FOREIGN KEY (location_id) REFERENCES locations (id) ON DELETE CASCADE
+                job_title VARCHAR(255) NOT NULL        -- Job title
             );
         """)
         

@@ -50,45 +50,23 @@ def import_locations(conn, df):
 
 
 def import_jobs(conn, df):
-    """
-    Processes unique jobs from the DataFrame and inserts them into the jobs table.
-    Associates each job with a location.
-    """
-    # Define relevant job columns
-    job_columns = ['Job Id', 'Job GUID', 'Job Code', 'Job Title', 'Location']
-
-    # Extract unique jobs
+    job_columns = ['Job Id', 'Job GUID', 'Job Code', 'Job Title']
     jobs_df = df[job_columns].drop_duplicates(subset=['Job Id'])
 
     with conn.cursor() as cur:
         for _, row in jobs_df.iterrows():
             try:
-                # Get the location_id for the job's location
-                cur.execute("SELECT id FROM locations WHERE location = %s", (row['Location'],))
-                location_id = cur.fetchone()
-
-                if location_id:
-                    location_id = location_id[0]
-
-                    # Insert the job into the jobs table
-                    cur.execute("""
-                        INSERT INTO jobs (job_id, job_guid, job_code, job_title, location_id)
-                        VALUES (%s, %s, %s, %s, %s)
-                        ON CONFLICT (job_id) DO NOTHING
-                    """, (
-                        row['Job Id'],
-                        row['Job GUID'],
-                        row['Job Code'],
-                        row['Job Title'],
-                        location_id
-                    ))
-                    print(f"Inserted job: {row['Job Title']} (Location: {row['Location']})")
-                else:
-                    print(f"Location not found for job: {row['Job Title']} (Location: {row['Location']})")
-
+                # Insert the job into the jobs table
+                cur.execute("""
+                    INSERT INTO jobs (job_id, job_guid, job_code, job_title)
+                    VALUES (%s, %s, %s, %s)
+                    ON CONFLICT (job_id) DO NOTHING
+                """, (
+                    row['Job Id'], row['Job GUID'], row['Job Code'], row['Job Title']
+                ))
+                print(f"Inserted job: {row['Job Title']}")
             except psycopg.errors.UniqueViolation:
                 print(f"Job already exists: {row['Job Title']}")
-        # Commit after processing all rows
         conn.commit()
     print("All jobs processed.")
 
