@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 import psycopg
 from db import create_tables
-from file_processors import menu_processor, time_entries_processor
+from file_processors import menu_processor, time_entries_processor, orders_processor
 
 load_dotenv()
 
@@ -20,6 +20,7 @@ with psycopg.connect(connectionString) as conn:
     create_tables.create_tables(conn)
     menu_processor.insert_menus_into_db(conn)
     time_entries_processor.process_time_entries(conn)
+    orders_processor.process_orders(conn)
     
 
     
