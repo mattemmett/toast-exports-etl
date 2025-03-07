@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "toast-exports-etl"
+version = "0.1.0"
+description = "ETL pipeline for Toast exports"
+requires-python = ">=3.8"
+dependencies = [
+    "pandas",
+    "python-dotenv",
+    "psycopg[binary]"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"] 

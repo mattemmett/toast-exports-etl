@@ -1,6 +1,7 @@
 import psycopg
 import json
 import logging
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -10,7 +11,6 @@ def insert_menus_into_db(conn):
 
     Parameters:
     - connection: A psycopg3 database connection object (used with a `with` statement).
-    - data: A list of dictionaries containing menu data.
     """
     insert_menus_sql = """
         INSERT INTO menus (
@@ -56,7 +56,9 @@ def insert_menus_into_db(conn):
         )
         ON CONFLICT DO NOTHING;
     """
-    with open('./samaple-data/20240410/MenuExport_adddeea2-4ff3-46e6-840b-5b8fa9fad1db.json' , 'r') as file:
+    
+    sample_data_path = Path('sample_data/20240410/MenuExport_adddeea2-4ff3-46e6-840b-5b8fa9fad1db.json')
+    with open(sample_data_path, 'r') as file:
         data = json.load(file)
     
     logger.info(f"Processing {len(data)} menu items")

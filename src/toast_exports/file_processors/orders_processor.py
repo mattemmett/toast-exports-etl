@@ -1,75 +1,133 @@
-import psycopg
 import pandas as pd
-from datetime import datetime
 import logging
-from utils.name_formatter import format_name
+from pathlib import Path
+import psycopg
+from toast_exports.utils.name_formatter import format_name
 
 logger = logging.getLogger(__name__)
 
 def process_orders(conn):
     """
-    Process orders and their associated checks from CSV files.
+    Process orders from CSV file and insert into database.
+    
+    Parameters:
+    - conn: psycopg connection object
     """
-    # Read the CSV files
-    orders_df = pd.read_csv('./samaple-data/20240410/OrderDetails.csv')
-    checks_df = pd.read_csv('./samaple-data/20240410/CheckDetails.csv')
+    sample_data_path = Path('sample_data/20240410/OrderDetails.csv')
     
-    logger.info(f"Processing {len(orders_df)} orders and {len(checks_df)} checks")
-    orders_processed = 0
-    orders_skipped = 0
-    checks_processed = 0
-    checks_skipped = 0
+    logger.info("Reading orders data...")
+    df = pd.read_csv(sample_data_path)
     
-    # Process each order and its associated checks
-    for _, order_row in orders_df.iterrows():
+    # First, ensure we have the location in the locations table
+    with conn.cursor() as cursor:
         try:
-            # First insert the order
-            order_id = import_order(conn, order_row)
-            if order_id:
-                orders_processed += 1
-            else:
-                orders_skipped += 1
-                continue
-                
-            # Get the check numbers for this order
-            if pd.isna(order_row['Checks']):
-                logger.warning(f"Info: No checks found for order {order_row['Order #']}")
-                continue
-                
-            check_numbers = str(order_row['Checks']).split(',')
-            check_numbers = [num.strip() for num in check_numbers]
-            
-            logger.debug(f"Processing checks: {check_numbers} for order {order_row['Order #']}")
-            
-            # Process each associated check
-            for check_num in check_numbers:
-                try:
-                    check_num = int(check_num)
-                except ValueError:
-                    logger.warning(f"Info: Invalid check number format {check_num}")
-                    continue
-                
-                matching_checks = checks_df[checks_df['Check #'] == check_num]
-                if matching_checks.empty:
-                    logger.warning(f"Info: No check found with number {check_num} for order {order_row['Order #']}")
-                    continue
-                    
-                for _, check_row in matching_checks.iterrows():
-                    try:
-                        if import_check(conn, check_row, order_id):
-                            checks_processed += 1
-                        else:
-                            checks_skipped += 1
-                    except Exception as check_error:
-                        logger.error(f"Error processing check {check_num}: {str(check_error)}")
-                
+            cursor.execute(
+                "INSERT INTO locations (location) VALUES (%s) ON CONFLICT (location) DO NOTHING",
+                (df['Location'].iloc[0],)
+            )
             conn.commit()
             
+            # Get the location_id
+            cursor.execute("SELECT id FROM locations WHERE location = %s", (df['Location'].iloc[0],))
+            location_id = cursor.fetchone()[0]
         except Exception as e:
-            logger.error(f"Error processing order {order_row['Order #']}: {str(e)}")
+            logger.error(f"Error setting up location: {str(e)}")
             conn.rollback()
+            raise
     
-    logger.info(f"Orders processing complete. Orders: {orders_processed} processed, {orders_skipped} skipped. Checks: {checks_processed} processed, {checks_skipped} skipped")
+    inserted_count = 0
+    skipped_count = 0
+    error_count = 0
+    
+    with conn.cursor() as cursor:
+        for _, row in df.iterrows():
+            try:
+                # Format server name consistently
+                server_name = format_name(row['Server'])
+                
+                # First, ensure the server exists in employees table
+                cursor.execute(
+                    """
+                    INSERT INTO employees (employee_id, employee_guid, employee_name) 
+                    VALUES (%s, uuid_generate_v4(), %s)
+                    ON CONFLICT (employee_name) DO NOTHING
+                    RETURNING id
+                    """,
+                    (0, server_name)  # Using 0 as a placeholder employee_id
+                )
+                result = cursor.fetchone()
+                if result:
+                    server_id = result[0]
+                else:
+                    # Get the existing server_id
+                    cursor.execute("SELECT id FROM employees WHERE employee_name = %s", (server_name,))
+                    server_id = cursor.fetchone()[0]
+                
+                # Convert string dates to timestamps
+                opened_at = pd.to_datetime(row['Opened'])
+                closed_at = pd.to_datetime(row['Closed']) if pd.notna(row['Closed']) else None
+                paid_at = pd.to_datetime(row['Paid']) if pd.notna(row['Paid']) else None
+
+                # Calculate duration in minutes
+                duration_minutes = None
+                if pd.notna(row['Duration (Opened to Paid)']):
+                    duration_str = row['Duration (Opened to Paid)']
+                    hours, minutes, seconds = map(int, duration_str.split(':'))
+                    duration_minutes = hours * 60 + minutes
+                
+                # Insert order
+                cursor.execute("""
+                    INSERT INTO orders (
+                        location_id, order_id, order_number, opened_at, closed_at, paid_at,
+                        guest_count, tab_names, server_id, table_number, revenue_center,
+                        dining_area, service_period, dining_option, discount_amount,
+                        subtotal, tax, tip, gratuity, total, is_voided,
+                        duration_minutes, order_source
+                    ) VALUES (
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s, %s, %s
+                    )
+                    ON CONFLICT (order_id) DO NOTHING
+                    RETURNING id
+                """, (
+                    location_id,
+                    int(row['Order Id']),
+                    row['Order #'],
+                    opened_at,
+                    closed_at,
+                    paid_at,
+                    row['# of Guests'],
+                    row['Tab Names'],
+                    server_id,
+                    row['Table'],
+                    row['Revenue Center'],
+                    row['Dining Area'],
+                    row['Service'],
+                    row['Dining Options'],
+                    row['Discount Amount'],
+                    row['Amount'],
+                    row['Tax'],
+                    row['Tip'],
+                    row['Gratuity'],
+                    row['Total'],
+                    row['Voided'],
+                    duration_minutes,
+                    row['Order Source']
+                ))
+                
+                if cursor.rowcount > 0:
+                    inserted_count += 1
+                    logger.debug(f"Inserted order: {row['Order #']}")
+                else:
+                    skipped_count += 1
+                    logger.debug(f"Order already exists (skipped): {row['Order #']}")
+                conn.commit()
+            except Exception as e:
+                error_count += 1
+                logger.error(f"Error processing order {row.get('Order #', 'unknown')}: {str(e)}")
+                conn.rollback()
+    
+    logger.info(f"Orders processing complete. {inserted_count} inserted, {skipped_count} skipped, {error_count} errors")
 
 def import_order(conn, row):
     """
