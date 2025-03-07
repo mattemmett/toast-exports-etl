@@ -1,3 +1,4 @@
 pandas
-mysql-connector-python
 python-dotenv
+pytest
+psycopg

@@ -1,0 +1,8 @@
+---
+description: Documentation for understanding Orders and the relationship to other components like, checks, payments, and selections
+globs: 
+---
+
+# Your rule content
+
+While we are using CSV files, not the Toast API, https://doc.toasttab.com/doc/devguide/portalOrdersApiOverview.html contains valuble information about the components and relations of an order
