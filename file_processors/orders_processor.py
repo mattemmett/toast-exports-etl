@@ -2,6 +2,7 @@ import psycopg
 import pandas as pd
 from datetime import datetime
 import logging
+from utils.name_formatter import format_name
 
 logger = logging.getLogger(__name__)
 
@@ -70,10 +71,6 @@ def process_orders(conn):
     
     logger.info(f"Orders processing complete. Orders: {orders_processed} processed, {orders_skipped} skipped. Checks: {checks_processed} processed, {checks_skipped} skipped")
 
-def format_server_name(server_name):
-    """Format server name to match employees table format."""
-    return server_name.strip() if server_name else None
-
 def import_order(conn, row):
     """
     Import a single order and return its id.
@@ -84,20 +81,20 @@ def import_order(conn, row):
             cur.execute("SELECT id FROM locations WHERE location = %s", (row['Location'],))
             location_id = cur.fetchone()
             if not location_id:
-                logger.warning(f"Info: Location not found: {row['Location']}")
+                logger.error(f"Error: Location not found: {row['Location']}")
                 return None
 
             # Get server_id using formatted name
             if pd.notna(row['Server']):
-                formatted_name = format_server_name(row['Server'])
+                formatted_name = format_name(row['Server'])
                 cur.execute("SELECT id FROM employees WHERE employee_name = %s", (formatted_name,))
                 server_id = cur.fetchone()
                 if not server_id:
-                    logger.warning(f"Info: Server not found in employees table: {formatted_name} (original: {row['Server']})")
+                    logger.error(f"Error: Server not found in employees table: {formatted_name} (original: {row['Server']})")
                     return None
                 server_id = server_id[0]
             else:
-                logger.warning(f"Info: No server specified for order {row['Order Id']}")
+                logger.error(f"Error: No server specified for order {row['Order Id']}")
                 return None
 
             # Convert string dates to timestamps

@@ -2,6 +2,7 @@ import psycopg
 import pandas as pd
 import os
 import logging
+from utils.name_formatter import format_name
 
 logger = logging.getLogger(__name__)
 
@@ -12,6 +13,9 @@ def process_time_entries(conn):
     # Read the TimeEntries.csv file into a DataFrame
     with open('./samaple-data/20240410/TimeEntries.csv', 'r') as file:
         df = pd.read_csv(file)
+        
+    # Format employee names consistently
+    df['Employee'] = df['Employee'].apply(format_name)
 
     # Import locations
     import_locations(conn, df)
