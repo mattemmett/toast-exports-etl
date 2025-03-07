@@ -4,7 +4,8 @@ import logging
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
 )
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,10 @@ def execute_with_error_handling(cur, sql, description):
     """
     try:
         cur.execute(sql)
-        logger.info(f"Successfully {description}")
+        if "CREATE TABLE" in sql:
+            logger.info(f"Info: {description} (table already exists or was created)")
+        elif "CREATE EXTENSION" in sql:
+            logger.info(f"Info: {description} (extension already exists or was created)")
     except psycopg.Error as e:
         logger.error(f"Error {description}: {str(e)}")
         raise

@@ -1,6 +1,9 @@
 import psycopg
 import pandas as pd
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 def process_time_entries(conn):
     """
@@ -29,34 +32,39 @@ def import_locations(conn, df):
     """
     # Remove duplicate locations
     df = df.drop_duplicates(subset=['Location'])
+    inserted_count = 0
+    skipped_count = 0
 
     with conn.cursor() as cur:
         for _, row in df.iterrows():
-            location = row['Location']  # Access the value for 'Location'
+            location = row['Location']
             try:
-                # Use ON CONFLICT DO NOTHING to handle duplicates at the database level
                 cur.execute("""
                     INSERT INTO locations (location)
                     VALUES (%s)
                     ON CONFLICT DO NOTHING
                     """, (location,))
-                print(f"Inserted location: {location}")
-            except psycopg.errors.UniqueViolation:
-                # No rollback needed since ON CONFLICT prevents errors
-                print(f"Location already exists: {location}")
-        # Commit after processing all rows
+                if cur.rowcount > 0:
+                    inserted_count += 1
+                    logger.info(f"Info: Inserted new location: {location}")
+                else:
+                    skipped_count += 1
+                    logger.info(f"Info: Location already exists (skipped): {location}")
+            except Exception as e:
+                logger.error(f"Error processing location {location}: {str(e)}")
         conn.commit()
-    print("All locations processed.")
+    logger.info(f"Locations processing complete. {inserted_count} inserted, {skipped_count} already existed")
 
 
 def import_jobs(conn, df):
     job_columns = ['Job Id', 'Job GUID', 'Job Code', 'Job Title']
     jobs_df = df[job_columns].drop_duplicates(subset=['Job Id'])
+    inserted_count = 0
+    skipped_count = 0
 
     with conn.cursor() as cur:
         for _, row in jobs_df.iterrows():
             try:
-                # Insert the job into the jobs table
                 cur.execute("""
                     INSERT INTO jobs (job_id, job_guid, job_code, job_title)
                     VALUES (%s, %s, %s, %s)
@@ -64,26 +72,29 @@ def import_jobs(conn, df):
                 """, (
                     row['Job Id'], row['Job GUID'], row['Job Code'], row['Job Title']
                 ))
-                print(f"Inserted job: {row['Job Title']}")
-            except psycopg.errors.UniqueViolation:
-                print(f"Job already exists: {row['Job Title']}")
+                if cur.rowcount > 0:
+                    inserted_count += 1
+                    logger.info(f"Info: Inserted new job: {row['Job Title']}")
+                else:
+                    skipped_count += 1
+                    logger.info(f"Info: Job already exists (skipped): {row['Job Title']}")
+            except Exception as e:
+                logger.error(f"Error processing job {row['Job Title']}: {str(e)}")
         conn.commit()
-    print("All jobs processed.")
+    logger.info(f"Jobs processing complete. {inserted_count} inserted, {skipped_count} already existed")
 
 def import_employees(conn, df):
     """
     Processes the unique employees from the DataFrame and inserts them into the employees table.
     """
-    # Define the relevant employee columns
     employee_columns = ['Employee Id', 'Employee GUID', 'Employee External Id', 'Employee']
-
-    # Extract unique employees
     employees_df = df[employee_columns].drop_duplicates(subset=['Employee Id'])
+    inserted_count = 0
+    skipped_count = 0
 
     with conn.cursor() as cur:
         for _, row in employees_df.iterrows():
             try:
-                # Insert employee data into the employees table
                 cur.execute("""
                     INSERT INTO employees (employee_id, employee_guid, employee_external_id, employee_name)
                     VALUES (%s, %s, %s, %s)
@@ -94,46 +105,47 @@ def import_employees(conn, df):
                     row['Employee External Id'],
                     row['Employee']
                 ))
-                print(f"Inserted employee: {row['Employee']}")
-            except psycopg.errors.UniqueViolation:
-                print(f"Employee already exists: {row['Employee']}")
-        # Commit after processing all rows
+                if cur.rowcount > 0:
+                    inserted_count += 1
+                    logger.info(f"Info: Inserted new employee: {row['Employee']}")
+                else:
+                    skipped_count += 1
+                    logger.info(f"Info: Employee already exists (skipped): {row['Employee']}")
+            except Exception as e:
+                logger.error(f"Error processing employee {row['Employee']}: {str(e)}")
         conn.commit()
-    print("All employees processed.")
+    logger.info(f"Employees processing complete. {inserted_count} inserted, {skipped_count} already existed")
 
 def import_time_entries(conn, df):
     """
     Processes and inserts time entries into the time_entries table.
     Links time entries to their respective location, employee, and job.
     """
+    processed_count = 0
+    error_count = 0
+
     with conn.cursor() as cur:
         for _, row in df.iterrows():
             try:
                 # Fetch location_id
                 cur.execute("SELECT id FROM locations WHERE location = %s", (row['Location'],))
                 location_id = cur.fetchone()
-                if location_id:
-                    location_id = location_id[0]
-                else:
-                    print(f"Location not found for time entry: {row['Location']}")
+                if not location_id:
+                    logger.warning(f"Info: Location not found for time entry: {row['Location']}")
                     continue
 
                 # Fetch employee_id
                 cur.execute("SELECT id FROM employees WHERE employee_id = %s", (row['Employee Id'],))
                 employee_id = cur.fetchone()
-                if employee_id:
-                    employee_id = employee_id[0]
-                else:
-                    print(f"Employee not found for time entry: {row['Employee']}")
+                if not employee_id:
+                    logger.warning(f"Info: Employee not found for time entry: {row['Employee']}")
                     continue
 
                 # Fetch job_id
                 cur.execute("SELECT id FROM jobs WHERE job_id = %s", (row['Job Id'],))
                 job_id = cur.fetchone()
-                if job_id:
-                    job_id = job_id[0]
-                else:
-                    print(f"Job not found for time entry: {row['Job Title']}")
+                if not job_id:
+                    logger.warning(f"Info: Job not found for time entry: {row['Job Title']}")
                     continue
 
                 # Insert the time entry
@@ -145,16 +157,17 @@ def import_time_entries(conn, df):
                         wage, regular_hours, overtime_hours, regular_pay, overtime_pay, total_pay
                     ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
-                    location_id, employee_id, job_id,
+                    location_id[0], employee_id[0], job_id[0],
                     row['In Date'], row['Out Date'], row['Auto Clock-out'] == 'Yes',
                     row['Total Hours'], row['Unpaid Break Time'], row['Paid Break Time'], row['Payable Hours'],
                     row['Cash Tips Declared'], row['Non Cash Tips'], row['Total Gratuity'], row['Total Tips'], row['Tips Withheld'],
                     row['Wage'], row['Regular Hours'], row['Overtime Hours'],
                     row['Regular Pay'], row['Overtime Pay'], row['Total Pay']
                 ))
-                print(f"Inserted time entry for employee: {row['Employee']}")
+                processed_count += 1
+                logger.info(f"Info: Processed time entry for employee: {row['Employee']}")
             except Exception as e:
-                print(f"Error inserting time entry for employee: {row['Employee']} - {e}")
-        # Commit the transaction after processing all rows
+                error_count += 1
+                logger.error(f"Error processing time entry for employee {row['Employee']}: {str(e)}")
         conn.commit()
-    print("All time entries processed.")
+    logger.info(f"Time entries processing complete. {processed_count} entries processed, {error_count} errors encountered")

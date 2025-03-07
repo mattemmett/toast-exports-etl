@@ -13,68 +13,66 @@ def process_orders(conn):
     orders_df = pd.read_csv('./samaple-data/20240410/OrderDetails.csv')
     checks_df = pd.read_csv('./samaple-data/20240410/CheckDetails.csv')
     
-    logger.info(f"Loaded {len(orders_df)} orders and {len(checks_df)} checks")
+    logger.info(f"Processing {len(orders_df)} orders and {len(checks_df)} checks")
+    orders_processed = 0
+    orders_skipped = 0
+    checks_processed = 0
+    checks_skipped = 0
     
     # Process each order and its associated checks
     for _, order_row in orders_df.iterrows():
         try:
             # First insert the order
             order_id = import_order(conn, order_row)
-            if not order_id:
+            if order_id:
+                orders_processed += 1
+            else:
+                orders_skipped += 1
                 continue
                 
             # Get the check numbers for this order
             if pd.isna(order_row['Checks']):
-                logger.warning(f"No checks found for order {order_row['Order #']}")
+                logger.warning(f"Info: No checks found for order {order_row['Order #']}")
                 continue
                 
             check_numbers = str(order_row['Checks']).split(',')
             check_numbers = [num.strip() for num in check_numbers]
             
-            logger.info(f"Looking for checks: {check_numbers} for order {order_row['Order #']}")
+            logger.debug(f"Processing checks: {check_numbers} for order {order_row['Order #']}")
             
             # Process each associated check
             for check_num in check_numbers:
                 try:
                     check_num = int(check_num)
                 except ValueError:
-                    logger.error(f"Could not convert check number {check_num} to integer")
+                    logger.warning(f"Info: Invalid check number format {check_num}")
                     continue
                 
                 matching_checks = checks_df[checks_df['Check #'] == check_num]
                 if matching_checks.empty:
-                    logger.warning(f"No check found with number {check_num} for order {order_row['Order #']}")
+                    logger.warning(f"Info: No check found with number {check_num} for order {order_row['Order #']}")
                     continue
                     
                 for _, check_row in matching_checks.iterrows():
                     try:
-                        import_check(conn, check_row, order_id)
+                        if import_check(conn, check_row, order_id):
+                            checks_processed += 1
+                        else:
+                            checks_skipped += 1
                     except Exception as check_error:
                         logger.error(f"Error processing check {check_num}: {str(check_error)}")
-                        raise
                 
             conn.commit()
-            logger.info(f"Successfully processed order {order_row['Order #']} and its checks")
             
         except Exception as e:
             logger.error(f"Error processing order {order_row['Order #']}: {str(e)}")
             conn.rollback()
+    
+    logger.info(f"Orders processing complete. Orders: {orders_processed} processed, {orders_skipped} skipped. Checks: {checks_processed} processed, {checks_skipped} skipped")
 
 def format_server_name(server_name):
-    """
-    Convert server name from 'Bartender A' format to 'A, Bartender' format
-    """
-    if not server_name or not isinstance(server_name, str):
-        return None
-        
-    parts = server_name.split()
-    if len(parts) < 2:
-        return server_name
-        
-    # Take the last word as the last name, join the rest as first name
-    last_name = parts[-1]
-    first_name = ' '.join(parts[:-1])
-    return f"{last_name}, {first_name}"
+    """Format server name to match employees table format."""
+    return server_name.strip() if server_name else None
 
 def import_order(conn, row):
     """
@@ -86,9 +84,8 @@ def import_order(conn, row):
             cur.execute("SELECT id FROM locations WHERE location = %s", (row['Location'],))
             location_id = cur.fetchone()
             if not location_id:
-                logger.error(f"Location not found: {row['Location']}")
+                logger.warning(f"Info: Location not found: {row['Location']}")
                 return None
-            location_id = location_id[0]
 
             # Get server_id using formatted name
             if pd.notna(row['Server']):
@@ -96,11 +93,11 @@ def import_order(conn, row):
                 cur.execute("SELECT id FROM employees WHERE employee_name = %s", (formatted_name,))
                 server_id = cur.fetchone()
                 if not server_id:
-                    logger.error(f"Server not found in employees table: {formatted_name} (original: {row['Server']})")
+                    logger.warning(f"Info: Server not found in employees table: {formatted_name} (original: {row['Server']})")
                     return None
                 server_id = server_id[0]
             else:
-                logger.warning(f"No server specified for order {row['Order Id']}")
+                logger.warning(f"Info: No server specified for order {row['Order Id']}")
                 return None
 
             # Convert string dates to timestamps
@@ -127,9 +124,10 @@ def import_order(conn, row):
                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                     %s, %s, %s, %s, %s, %s, %s, %s
                 )
+                ON CONFLICT (order_id) DO NOTHING
                 RETURNING id
             """, (
-                location_id,
+                location_id[0],
                 int(row['Order Id']),
                 row['Order #'],
                 opened_at,
@@ -154,9 +152,13 @@ def import_order(conn, row):
                 row['Order Source']
             ))
             
-            order_id = cur.fetchone()[0]
-            logger.info(f"Inserted order: {row['Order Id']}")
-            return order_id
+            result = cur.fetchone()
+            if result:
+                logger.info(f"Info: Inserted new order: {row['Order #']}")
+                return result[0]
+            else:
+                logger.info(f"Info: Order already exists (skipped): {row['Order #']}")
+                return None
 
         except Exception as e:
             logger.error(f"Error inserting order {row['Order Id']}: {str(e)}")
@@ -165,6 +167,7 @@ def import_order(conn, row):
 def import_check(conn, row, order_id):
     """
     Import a single check associated with an order.
+    Returns True if check was inserted, False if skipped.
     """
     with conn.cursor() as cur:
         try:
@@ -183,6 +186,8 @@ def import_check(conn, row, order_id):
                     %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                     %s, %s, %s, %s
                 )
+                ON CONFLICT (order_id, check_number) DO NOTHING
+                RETURNING id
             """, (
                 order_id,
                 int(row['Check Id']),
@@ -204,7 +209,14 @@ def import_check(conn, row, order_id):
                 row['Total'],
                 row['Link']
             ))
-            logger.info(f"Inserted check: {row['Check Id']} for order id {order_id}")
+            
+            result = cur.fetchone()
+            if result:
+                logger.info(f"Info: Inserted new check: {row['Check #']}")
+                return True
+            else:
+                logger.info(f"Info: Check already exists (skipped): {row['Check #']}")
+                return False
 
         except Exception as e:
             logger.error(f"Error inserting check {row['Check Id']}: {str(e)}")
